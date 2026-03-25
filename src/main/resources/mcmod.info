@@ -1,0 +1,16 @@
+[
+{
+  "modid": "lorebot",
+  "name": "LoreBot AI Assistant",
+  "description": "An AI assistant integrated into Minecraft to check the wiki and get help without leaving the game.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Daniel"],
+  "credits": "Created by Daniel",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
