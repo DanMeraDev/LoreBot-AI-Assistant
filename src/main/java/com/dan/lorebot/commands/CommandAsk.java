@@ -232,14 +232,20 @@ public class CommandAsk extends CommandBase {
     }
 
     private String askGemini(String userPrompt, String systemPrompt) throws Exception {
-        URL url = new URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + ModConfig.apiKey);
+        URL url = new URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + ModConfig.apiKey);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json; utf-8");
         con.setDoOutput(true);
 
         JsonObject jsonPayload = new JsonObject();
-        jsonPayload.addProperty("system_instruction", systemPrompt); // Para Gemini v1beta con instrucciones del sistema
+        JsonObject systemInstruction = new JsonObject();
+        JsonArray systemParts = new JsonArray();
+        JsonObject systemPart = new JsonObject();
+        systemPart.addProperty("text", systemPrompt);
+        systemParts.add(systemPart);
+        systemInstruction.add("parts", systemParts);
+        jsonPayload.add("system_instruction", systemInstruction);
         
         JsonObject content = new JsonObject();
         content.addProperty("role", "user");
