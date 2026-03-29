@@ -4,12 +4,13 @@ import com.dan.lorebot.LoreBot;
 import net.minecraftforge.fml.common.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
-import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -103,13 +104,41 @@ public class WikiManager {
                 return new PDFTextStripper().getText(doc);
             }
         } else if (name.endsWith(".docx")) {
-            try (FileInputStream fis = new FileInputStream(file);
-                 XWPFDocument doc = new XWPFDocument(fis);
-                 XWPFWordExtractor extractor = new XWPFWordExtractor(doc)) {
-                return extractor.getText();
+            return extractDocxText(file);
+        }
+        return null;
+    }
+
+    private static final Pattern W_T_PATTERN = Pattern.compile("<w:t[^>]*>([^<]+)</w:t>");
+    private static final Pattern W_P_PATTERN = Pattern.compile("</w:p>");
+
+    private static String extractDocxText(File file) throws Exception {
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(file))) {
+            ZipEntry entry;
+            while ((entry = zis.getNextEntry()) != null) {
+                if ("word/document.xml".equals(entry.getName())) {
+                    byte[] data = readAllBytes(zis);
+                    String xml = new String(data, StandardCharsets.UTF_8);
+                    // Replace paragraph endings with newlines, then extract text from <w:t> tags
+                    xml = W_P_PATTERN.matcher(xml).replaceAll("</w:p>\n");
+                    Matcher matcher = W_T_PATTERN.matcher(xml);
+                    StringBuilder sb = new StringBuilder();
+                    while (matcher.find()) {
+                        sb.append(matcher.group(1));
+                    }
+                    return sb.toString();
+                }
             }
         }
         return null;
+    }
+
+    private static byte[] readAllBytes(java.io.InputStream is) throws Exception {
+        java.io.ByteArrayOutputStream buf = new java.io.ByteArrayOutputStream();
+        byte[] tmp = new byte[4096];
+        int n;
+        while ((n = is.read(tmp)) != -1) buf.write(tmp, 0, n);
+        return buf.toByteArray();
     }
 
     private static void createExampleFile() {

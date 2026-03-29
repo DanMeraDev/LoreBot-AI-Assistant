@@ -39,9 +39,8 @@ minecraft {
 dependencies {
     minecraft 'net.minecraftforge:forge:1.12.2-14.23.5.2859'
     
-    // Librerías para leer PDF y DOCX
+    // Librería para leer PDF (DOCX se lee manualmente via ZipInputStream)
     compile 'org.apache.pdfbox:pdfbox:2.0.27'
-    compile 'org.apache.poi:poi-ooxml:3.17'
 }
 
 // Para que mcmod.info funcione en el entorno de desarrollo
@@ -71,6 +70,17 @@ jar {
             "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
         ])
     }
+    // Include only pdfbox dependencies (exclude Minecraft/Forge)
+    from {
+        def minecraftJars = configurations.minecraft.resolvedConfiguration.resolvedArtifacts.collect { it.file }
+        configurations.compile.collect {
+            if (it.isDirectory() || minecraftJars.contains(it)) {
+                return []
+            }
+            zipTree(it)
+        }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 jar.finalizedBy('reobfJar') 
